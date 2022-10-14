@@ -184,7 +184,7 @@ function bestMove() {
       for (let j = 0; j < 3; j++) {
         if (internBoard[i][j] == "") {
           internBoard[i][j] = ia;
-          let score = minimax(internBoard, 0, true);
+          let score = minimax(internBoard, 0, -Infinity, + Infinity, true);
           internBoard[i][j] = "";
           if (score < bestScore) {
             bestScore = score;
@@ -204,7 +204,7 @@ function bestMove() {
       for (let j = 0; j < 3; j++) {
         if (internBoard[i][j] == "") {
           internBoard[i][j] = ia;
-          let score = minimax(internBoard, 0, false);
+          let score = minimax(internBoard, 0, -Infinity, + Infinity, false);
           internBoard[i][j] = "";
           if (score > bestScore) {
             bestScore = score;
@@ -220,7 +220,7 @@ function bestMove() {
   }
 }
 
-function minimax(internBoard, depth, isMaximizing) {
+function minimax(internBoard, depth, alpha, beta, isMaximizing) {
   let result = checkWinner();
 
   if (result !== null) {
@@ -233,12 +233,15 @@ function minimax(internBoard, depth, isMaximizing) {
       for (let j = 0; j < 3; j++) {
         if (internBoard[i][j] == "") {
           internBoard[i][j] = "x";
-          let score = minimax(internBoard, depth + 1, false);
+          let score = minimax(internBoard, depth + 1, alpha, beta, false);
           internBoard[i][j] = "";
 
-          if (score > bestScore) {
-            bestScore = score;
+          bestScore = Math.max(score, bestScore);
+          alpha = Math.max(alpha, score);
+          if (beta <= alpha) {
+            break
           }
+
         }
       }
     }
@@ -249,11 +252,13 @@ function minimax(internBoard, depth, isMaximizing) {
       for (let j = 0; j < 3; j++) {
         if (internBoard[i][j] == "") {
           internBoard[i][j] = "circle";
-          let score = minimax(internBoard, depth + 1, true);
+          let score = minimax(internBoard, depth + 1, alpha, beta, true);
           internBoard[i][j] = "";
 
-          if (score < bestScore) {
-            bestScore = score;
+          bestScore = Math.min(score, bestScore);
+          beta = Math.min(beta, score);
+          if (beta <= alpha) {
+            break
           }
         }
       }
