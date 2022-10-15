@@ -1,23 +1,25 @@
+const board = document.querySelector("[data-game-board]");
 const cellElements = document.querySelectorAll("[data-cell]");
-const board = document.querySelector("[data-board]");
-const winningMessageTextElement = document.querySelector(
-  "[data-winning-message-text]"
+
+const messageTextWinner = document.querySelector(
+  "[messageWinner-text]"
 );
-const winningMessage = document.querySelector("[data-winning-message]");
-const restartButton = document.querySelector("[data-restart-button]");
+const messageWinner = document.querySelector("[messageWinner]");
+
+const restartButton = document.querySelector("[button-restart]");
 
 let turn;
 let internBoard;
 
 const winningCombinations = [
   [0, 1, 2],
+  [0, 3, 6],
+  [0, 4, 8],
+  [1, 4, 7],
+  [2, 4, 6],
+  [2, 5, 8],
   [3, 4, 5],
   [6, 7, 8],
-  [0, 3, 6],
-  [1, 4, 7],
-  [2, 5, 8],
-  [0, 4, 8],
-  [2, 4, 6],
 ];
 
 let scores = {
@@ -29,7 +31,7 @@ let scores = {
 let ai = "";
 let human = "";
 
-const startGame = () => {
+function startGame() {
   internBoard = [["", "", ""], ["", "", ""], ["", "", ""]];
 
   ia = Math.floor(Math.random() * 2) == 0 ? "x" : "circle";
@@ -40,27 +42,28 @@ const startGame = () => {
   for (const cell of cellElements) {
     cell.classList.remove("circle");
     cell.classList.remove("x");
+
     cell.removeEventListener("click", handleClick);
     cell.addEventListener("click", handleClick, { once: true });
   }
 
-  setBoardHoverClass();
-  winningMessage.classList.remove("show-winning-message");
+  boardHover();
+  messageWinner.classList.remove("show-winning-message");
 };
 
-const endGame = (isDraw) => {
+function endGame(isDraw) {
   if (isDraw) {
-    winningMessageTextElement.innerText = "Empate!";
+    messageTextWinner.innerText = "Empate!!!";
   } else {
-    winningMessageTextElement.innerText = turn == "circle"
-      ? "O Venceu!"
-      : "X Venceu!";
+    messageTextWinner.innerText = turn == "circle"
+      ? "O venceu!!!"
+      : "X Venceu!!!";
   }
 
-  winningMessage.classList.add("show-winning-message");
+  messageWinner.classList.add("show-winning-message");
 };
 
-const checkForWin = (currentPlayer) => {
+function checkForWin(currentPlayer) {
   return winningCombinations.some((combination) => {
     return combination.every((index) => {
       return cellElements[index].classList.contains(currentPlayer);
@@ -68,80 +71,78 @@ const checkForWin = (currentPlayer) => {
   });
 };
 
-const checkForDraw = () => {
+function checkForDraw() {
   return [...cellElements].every((cell) => {
     return cell.classList.contains("x") || cell.classList.contains("circle");
   });
 };
 
-const placeMark = (cell, classToAdd) => {
+function markCell(cell, classToAdd) {
   cell.classList.add(classToAdd);
 };
 
-const setBoardHoverClass = () => {
-  board.classList.remove("circle");
+function boardHover() {
   board.classList.remove("x");
+  board.classList.remove("circle");
 
   if (turn == ia) {
     bestMove()
   } else {
-
     board.classList.add(human);
-
   }
 };
 
-const swapTurns = () => {
+function changeTurn() {
   if (turn == ia) {
     turn = human;
   } else {
     turn = ia;
   }
 
-  setBoardHoverClass();
+  boardHover();
 };
 
-function equals3(a, b, c) {
+function equalsCombination(a, b, c) {
   return a == b && b == c && a != "";
-
 }
 
-function checkWinner() {
+function verifyWinner() {
   let winner = null;
 
-  // horizontal
+  // verificar horizontal
   for (let i = 0; i < 3; i++) {
-    if (equals3(internBoard[i][0], internBoard[i][1], internBoard[i][2])) {
+    if (equalsCombination(internBoard[i][0], internBoard[i][1], internBoard[i][2])) {
       winner = internBoard[i][0];
     }
   }
 
-  // vertical
+  // verificar vertical
   for (let i = 0; i < 3; i++) {
-    if (equals3(internBoard[0][i], internBoard[1][i], internBoard[2][i])) {
+    if (equalsCombination(internBoard[0][i], internBoard[1][i], internBoard[2][i])) {
       winner = internBoard[0][i];
     }
   }
 
-  // diagonal
-  if (equals3(internBoard[0][0], internBoard[1][1], internBoard[2][2])) {
-    winner = internBoard[0][0];
-  }
-  if (equals3(internBoard[2][0], internBoard[1][1], internBoard[0][2])) {
+  // verificar diagonal
+  if (equalsCombination(internBoard[2][0], internBoard[1][1], internBoard[0][2])) {
     winner = internBoard[2][0];
   }
 
-  let openSpots = 0;
+  if (equalsCombination(internBoard[0][0], internBoard[1][1], internBoard[2][2])) {
+    winner = internBoard[0][0];
+  }
+
+  let openPoints = 0;
 
   for (let i = 0; i < 3; i++) {
     for (let j = 0; j < 3; j++) {
       if (internBoard[i][j] == "") {
-        openSpots++;
+        openPoints++;
       }
     }
   }
 
-  if (winner == null && openSpots == 0) {
+  if (winner == null && openPoints == 0) {
     return "tie";
   } else {
     return winner;
@@ -150,6 +151,7 @@ function checkWinner() {
 
 function findCellInGameForBot(move) {
   let indice = Math.floor(move.i * 3 + move.j);
+
   return cellElements[indice];
 }
 
@@ -184,7 +186,7 @@ function bestMove() {
       for (let j = 0; j < 3; j++) {
         if (internBoard[i][j] == "") {
           internBoard[i][j] = ia;
-          let score = minimax(internBoard, 0, -Infinity, + Infinity, true);
+          let score = minimaxPodaAlphaBeta(internBoard, 0, -Infinity, + Infinity, true);
           internBoard[i][j] = "";
           if (score < bestScore) {
             bestScore = score;
@@ -194,7 +196,7 @@ function bestMove() {
       }
     }
     let findCell = findCellInGameForBot(move);
-    placeMark(findCell, ia);
+    markCell(findCell, ia);
     atualizeInternBoard();
     stateGame(ia);
   } else {
@@ -204,7 +206,7 @@ function bestMove() {
       for (let j = 0; j < 3; j++) {
         if (internBoard[i][j] == "") {
           internBoard[i][j] = ia;
-          let score = minimax(internBoard, 0, -Infinity, + Infinity, false);
+          let score = minimaxPodaAlphaBeta(internBoard, 0, -Infinity, + Infinity, false);
           internBoard[i][j] = "";
           if (score > bestScore) {
             bestScore = score;
@@ -214,14 +216,14 @@ function bestMove() {
       }
     }
     let findCell = findCellInGameForBot(move);
-    placeMark(findCell, ia);
+    markCell(findCell, ia);
     atualizeInternBoard();
     stateGame(ia);
   }
 }
 
-function minimax(internBoard, depth, alpha, beta, isMaximizing) {
-  let result = checkWinner();
+function minimaxPodaAlphaBeta(internBoard, depth, alpha, beta, isMaximizing) {
+  let result = verifyWinner();
 
   if (result !== null) {
     return scores[result];
@@ -233,15 +235,15 @@ function minimax(internBoard, depth, alpha, beta, isMaximizing) {
       for (let j = 0; j < 3; j++) {
         if (internBoard[i][j] == "") {
           internBoard[i][j] = "x";
-          let score = minimax(internBoard, depth + 1, alpha, beta, false);
+          let score = minimaxPodaAlphaBeta(internBoard, depth + 1, alpha, beta, false);
           internBoard[i][j] = "";
 
           bestScore = Math.max(score, bestScore);
           alpha = Math.max(alpha, score);
-          if (beta <= alpha) {
-            break
-          }
 
+          if (beta <= alpha) {
+            break;
+          }
         }
       }
     }
@@ -252,13 +254,14 @@ function minimax(internBoard, depth, alpha, beta, isMaximizing) {
       for (let j = 0; j < 3; j++) {
         if (internBoard[i][j] == "") {
           internBoard[i][j] = "circle";
-          let score = minimax(internBoard, depth + 1, alpha, beta, true);
+          let score = minimaxPodaAlphaBeta(internBoard, depth + 1, alpha, beta, true);
           internBoard[i][j] = "";
 
           bestScore = Math.min(score, bestScore);
           beta = Math.min(beta, score);
+
           if (beta <= alpha) {
-            break
+            break;
           }
         }
       }
@@ -269,10 +272,8 @@ function minimax(internBoard, depth, alpha, beta, isMaximizing) {
 }
 
 
-const stateGame = (classToAdd) => {
-
+function stateGame(classToAdd) {
   const isWin = checkForWin(classToAdd);
-
   const isDraw = checkForDraw();
 
   if (isWin) {
@@ -280,12 +281,12 @@ const stateGame = (classToAdd) => {
   } else if (isDraw) {
     endGame(true);
   } else {
-    swapTurns();
+    changeTurn();
   };
 }
 
 
-const handleClick = (e) => {
+function handleClick(e) {
   // Colocar a marca (X ou Círculo)
   const classToAdd = human;
   const cell = e.target;
@@ -293,7 +294,7 @@ const handleClick = (e) => {
   if (!cell.classList.contains("circle") && !cell.classList.contains("x")) {
 
     if (ia != turn) {
-      placeMark(cell, classToAdd);
+      markCell(cell, classToAdd);
       atualizeInternBoard();
     }
 
